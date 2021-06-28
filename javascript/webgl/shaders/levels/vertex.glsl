@@ -3,7 +3,6 @@ uniform vec2 u_aspect_ratio;
 
 varying vec2 v_uv;
 
-
 vec2 resizedUv(vec2 inital_uv, vec2 resolution, vec2 aspect_ratio)
 {
 	vec2 ratio = vec2(
@@ -21,7 +20,7 @@ vec2 resizedUv(vec2 inital_uv, vec2 resolution, vec2 aspect_ratio)
 
 void main() {
     // Mirror
-    v_uv = vec2(1.0 - uv.x, uv.y);
+    v_uv = vec2(uv.x, uv.y);
 
     // Resize
     v_uv = resizedUv(v_uv, u_resolution, u_aspect_ratio);

@@ -1,0 +1,6 @@
+require('./scss/app.scss');
+require('regenerator-runtime/runtime');
+var _javascriptApp = require('./javascript/App');
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+var _javascriptAppDefault = _parcelHelpers.interopDefault(_javascriptApp);
+new _javascriptAppDefault.default();

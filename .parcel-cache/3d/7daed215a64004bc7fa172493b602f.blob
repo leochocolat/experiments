@@ -1,0 +1,10 @@
+var _parcelHelpers = require("@parcel/transformer-js/lib/esmodule-helpers.js");
+_parcelHelpers.defineInteropFlag(exports);
+var _ComponentFactory = require('./ComponentFactory');
+var _ComponentFactoryDefault = _parcelHelpers.interopDefault(_ComponentFactory);
+class App {
+  constructor() {
+    _ComponentFactoryDefault.default.start();
+  }
+}
+exports.default = App;
