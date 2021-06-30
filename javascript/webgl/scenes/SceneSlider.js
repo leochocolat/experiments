@@ -24,11 +24,24 @@ class SceneSlider extends Scene {
 
         this._settings = {
             damping: 0.1,
+            mouseDamping: 0.1,
             padding: 200,
             zPadding: 50,
             parallax: {
-                scale: 1.5
+                scale: 1.2
+            },
+            filters: {
+                levelFactor: 1.5,
+                saturationFactor: 1,
+                brightnessFactor: 1,
+                contrastFactor: 1,
+                alphaFactor: 1,
             }
+        }
+
+        this._mousePosition = {
+            target: { x: 0, y: 0 },
+            current: { x: 0, y: 0 },
         }
 
         this._position = {
@@ -56,6 +69,10 @@ class SceneSlider extends Scene {
     update(time, delta, fps) {
         this._updatePosition();
         this._updateSlidesPosition();
+
+        this._updateMousePosition();
+        this._updateSlidesMousePosition();
+
         this._updateSlidesSettings();
     }
 
@@ -82,9 +99,16 @@ class SceneSlider extends Scene {
         const folder = this._debugger.addFolder({ title: 'Slider' });
 
         folder.addInput(this._settings, 'damping', { min: 0, max: 1 });
+        folder.addInput(this._settings, 'mouseDamping', { min: 0, max: 1 });
 
         const parallax = folder.addFolder({ title: 'Parallax' });
         parallax.addInput(this._settings.parallax, 'scale', { min: 1, max: 5 });
+
+        const filters = folder.addFolder({ title: 'Filters' });
+        filters.addInput(this._settings.filters, 'alphaFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'levelFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'saturationFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'brightnessFactor', { min: 0, max: 10 });
 
         return folder;
     }
@@ -107,7 +131,7 @@ class SceneSlider extends Scene {
                     height,
                     initialPosition: dragWidth,
                     image: block.image,
-                    imageScale: this._settings.parallax.scale
+                    settings: this._settings,
                 });
     
                 dragWidth += slide.width + this._settings.padding;
@@ -149,17 +173,29 @@ class SceneSlider extends Scene {
         this._position.current.x = math.lerp(this._position.current.x, this._position.target.x, this._settings.damping);
     }
 
+    _updateMousePosition() {
+        this._mousePosition.current.x = math.lerp(this._mousePosition.current.x, this._mousePosition.target.x, this._settings.mouseDamping);
+        this._mousePosition.current.y = math.lerp(this._mousePosition.current.y, this._mousePosition.target.y, this._settings.mouseDamping);
+    }
+
     _updateSlidesPosition() {
         for (let i = 0; i < this._slides.length; i++) {
             const slide = this._slides[i];
             slide.position.x = this._position.current.x;
         }
     }
+
+    _updateSlidesMousePosition() {
+        for (let i = 0; i < this._slides.length; i++) {
+            const slide = this._slides[i];
+            slide.mousePosition = this._mousePosition.current;
+        }
+    }
     
     _updateSlidesSettings() {
         for (let i = 0; i < this._slides.length; i++) {
             const slide = this._slides[i];
-            slide.imageScale = this._settings.parallax.scale;
+            slide.settings = this._settings;
         }
     }
 
@@ -167,6 +203,7 @@ class SceneSlider extends Scene {
         this._dragstartHandler = this._dragstartHandler.bind(this);
         this._dragHandler = this._dragHandler.bind(this);
         this._dragendHandler = this._dragendHandler.bind(this);
+        this._mousemoveHandler = this._mousemoveHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -174,6 +211,8 @@ class SceneSlider extends Scene {
         this._dragManager.addEventListener('dragstart', this._dragstartHandler);
         this._dragManager.addEventListener('drag', this._dragHandler);
         this._dragManager.addEventListener('dragend', this._dragendHandler);
+
+        window.addEventListener('mousemove', this._mousemoveHandler);
     }
 
     _dragstartHandler(e) {
@@ -194,6 +233,11 @@ class SceneSlider extends Scene {
 
     _dragendHandler() {
         this._throw();
+    }
+
+    _mousemoveHandler(e) {
+        this._mousePosition.target.x = e.clientX;
+        this._mousePosition.target.y = e.clientY;
     }
 }
 

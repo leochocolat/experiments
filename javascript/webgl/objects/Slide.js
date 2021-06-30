@@ -16,12 +16,14 @@ class Slide extends Object3D {
 
         this._image = options.image;
 
-        this._imageScale = options.imageScale;
+        this._settings = options.settings;
 
         this._initialPosition = options.initialPosition;
 
         this._textureWidth = 0;
         this._textureHeight = 0;
+
+        this._mousePosition = new Vector2(0, 0);
 
         this._bindAll();
 
@@ -41,13 +43,31 @@ class Slide extends Object3D {
         return this._height;
     }
 
-    get imageScale() {
-        return this._imageScale;
+    get settings() {
+        return this._settings;
     }
 
-    set imageScale(value) {
-        this._imageScale = value;
-        this._material.uniforms.u_scale.value = value;
+    set settings(value) {
+        this._settings = value;
+
+        // Parallax
+        this._material.uniforms.u_scale.value = this._settings.parallax.scale;
+        
+        // Filters
+        this._material.uniforms.u_alpha_factor.value = this._settings.filters.alphaFactor;
+        this._material.uniforms.u_level_factor.value = this._settings.filters.levelFactor;
+        this._material.uniforms.u_saturation_factor.value = this._settings.filters.saturationFactor;
+        this._material.uniforms.u_brightness_factor.value = this._settings.filters.brightnessFactor;
+        this._material.uniforms.u_contrast_factor.value = this._settings.filters.contrastFactor;
+    }
+
+    get mousePosition() {
+        return this._mousePosition;
+    }
+
+    set mousePosition(value) {
+        this._mousePosition.x = value.x;
+        this._mousePosition.y = value.y;
     }
 
     /**
@@ -68,20 +88,19 @@ class Slide extends Object3D {
                 u_resolution: { value: new Vector2(this._width, this._height) },
                 u_texture: { value: this._texture },
                 u_aspect_ratio: { value: new Vector2(this._textureWidth, this._textureHeight) },
-                // Fade
-                u_alpha: { value: 1 },
                 // Level
                 u_level_min: { value: 0 },
                 u_level_max: { value: 1 },
-                u_level: { value: 0.5 },
+                u_level_factor: { value: this._settings.filters.levelFactor },
                 // Sat / Bright / Contrast
-                u_saturation: { value: 0.4 },
-                u_brightness: { value: 1.1 },
-                u_contrast: { value: 1 },
-                // Progress
-                u_uv_offset_x: { value: 0 },
+                u_saturation_factor: { value: this._settings.filters.saturationFactor },
+                u_brightness_factor: { value: this._settings.filters.brightnessFactor },
+                u_contrast_factor: { value: this._settings.filters.contrastFactor },
+                u_alpha_factor: { value: this._settings.filters.alphaFactor },
                 // Scale
-                u_scale: { value: this._imageScale },
+                u_scale: { value: this._settings.parallax.scale },
+                // Mouse
+                u_mouse_position: { value: this._mousePosition }
             },
         });
         
