@@ -17,12 +17,15 @@ class SceneLevels extends Scene {
         this._renderer = options.renderer;
 
         this._settings = {
-            animation: 'levelFadeWithBrightness',
+            animation: 'levelFade',
             timeScale: 1,
+            progress: 0,
             animationOptions: {
                 basicFade: 'basicFade',
                 levelFade: 'levelFade',
                 levelFadeWithBrightness: 'levelFadeWithBrightness',
+                // Enable mask in shader to use this animation
+                levelFadeWithRevealX: 'levelFadeWithRevealX',
             }
         }
 
@@ -72,6 +75,9 @@ class SceneLevels extends Scene {
             case 'levelFadeWithBrightness':
                 this.timelineShow.add(this.showLevelFadeWithBrightness(), 0);
                 break;
+            case 'levelFadeWithRevealX':
+                this.timelineShow.add(this.showLevelFadeWithRevealX(), 0);
+                break;
         }
     }
     
@@ -90,24 +96,30 @@ class SceneLevels extends Scene {
             case 'levelFadeWithBrightness':
                 this.timelineHide.add(this.hideLevelFadeWithBrightness(), 0);   
                 break;
+            case 'levelFadeWithRevealX':
+                this.timelineHide.add(this.hideLevelFadeWithRevealX(), 0);   
+                break;
         }
     }
 
     // Level
     showLevelFade() {
         const timeline = new gsap.timeline();
-        timeline.to(this._plane.material.uniforms.u_level, { duration: 1, value: 1, ease: 'sine.out' }, 0);
-        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1, value: 1, ease: 'sine.out' }, 0);
-        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 2, value: 1, ease: 'sine.out' }, 0);
+
+        timeline.to(this._plane.material.uniforms.u_level, { duration: 1.5, value: 1, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1.5, value: 1, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1.5, value: 1, ease: 'sine.out' }, 0);
+        timeline.fromTo(this._plane.material.uniforms.u_scale, { value: 1.2 }, { duration: 1.5, value: 1, ease: 'sine.out' }, 0);
 
         return timeline;
     }
 
     hideLevelFade() {
         const timeline = new gsap.timeline();
-        timeline.to(this._plane.material.uniforms.u_level, { duration: 1, value: 0, ease: 'sine.out' }, 0);
-        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1, value: 0, ease: 'sine.out' }, 0);
-        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 2, value: 0, ease: 'sine.out' }, 0);
+
+        timeline.to(this._plane.material.uniforms.u_level, { duration: 1.5, value: 0, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1.5, value: 0, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1.5, value: 0, ease: 'sine.out' }, 0);
 
         return timeline;
     }
@@ -115,6 +127,7 @@ class SceneLevels extends Scene {
     // Level + Brightness
     showLevelFadeWithBrightness() {
         const timeline = new gsap.timeline();
+
         timeline.to(this._plane.material.uniforms.u_level, { duration: 1, value: 1, ease: 'sine.out' }, 0);
         timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1, value: 1, ease: 'sine.out' }, 0);
         timeline.to(this._plane.material.uniforms.u_brightness, { duration: 2, value: 1, ease: 'sine.out' }, 0);
@@ -125,6 +138,7 @@ class SceneLevels extends Scene {
 
     hideLevelFadeWithBrightness() {
         const timeline = new gsap.timeline();
+
         timeline.to(this._plane.material.uniforms.u_brightness, { duration: 2, value: 5 }, 0);
         timeline.to(this._plane.material.uniforms.u_level, { duration: 1, value: 0, ease: 'sine.out' }, 0);
         timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1, value: 0, ease: 'sine.out' }, 0);
@@ -133,9 +147,32 @@ class SceneLevels extends Scene {
         return timeline;
     }
 
+    showLevelFadeWithRevealX() {
+        const timeline = new gsap.timeline();
+        
+        timeline.to(this._plane.material.uniforms.u_level, { duration: 1.5, value: 1, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1.5, value: 1, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_uv_offset_x, { duration: 1.5, value: 0, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1.5, value: 1, ease: 'sine.in' }, 0);
+
+        return timeline;
+    }
+
+    hideLevelFadeWithRevealX() {
+        const timeline = new gsap.timeline();
+        
+        timeline.to(this._plane.material.uniforms.u_level, { duration: 1.5, value: 0, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_saturation, { duration: 1.5, value: 0, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_uv_offset_x, { duration: 1.5, value: 1, ease: 'sine.inOut' }, 0);
+        timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1.5, value: 0, ease: 'sine.in' }, 0);
+
+        return timeline;
+    }
+
     // Alpha
     showBasicFade() {
         const timeline = new gsap.timeline();
+
         timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1, value: 1 }, 0);
 
         return timeline;
@@ -143,6 +180,7 @@ class SceneLevels extends Scene {
 
     hideBasicFade() {
         const timeline = new gsap.timeline();
+        
         timeline.to(this._plane.material.uniforms.u_alpha, { duration: 1, value: 0 }, 0);
 
         return timeline;
@@ -152,7 +190,7 @@ class SceneLevels extends Scene {
      * Private
      */
     _createTexture() {
-        const texture = new TextureLoader().load('https://source.unsplash.com/h4f1mJ-X06s');
+        const texture = new TextureLoader().load('https://source.unsplash.com/KxRNb1Cch8c');
         return texture;
     }
 
@@ -178,7 +216,7 @@ class SceneLevels extends Scene {
                 u_time: { value: 0 },
                 u_resolution: { value: new Vector2(1, 1) },
                 u_texture: { value: this._texture },
-                u_aspect_ratio: { value: new Vector2(1080, 720) },
+                u_aspect_ratio: { value: new Vector2(720, 1080) },
                 // Fade
                 u_alpha: { value: 1 },
                 // Level
@@ -190,7 +228,9 @@ class SceneLevels extends Scene {
                 u_brightness: { value: 1 },
                 u_contrast: { value: 1 },
                 // Progress
-                u_progress_x: { value: 0 },
+                u_uv_offset_x: { value: 0 },
+                // Scale
+                u_scale: { value: 1 },
             }
         });
 
@@ -208,11 +248,13 @@ class SceneLevels extends Scene {
 
         folder.addInput(this._plane.material.uniforms.u_level_min, 'value', { min: 0, max: 1, label: 'Level Min' });
         folder.addInput(this._plane.material.uniforms.u_level_max, 'value', { min: 0, max: 1, label: 'Level Max' });
-        folder.addInput(this._plane.material.uniforms.u_level, 'value', { min: 0, max: 1, label: 'Level' });
+        folder.addInput(this._plane.material.uniforms.u_level, 'value', { min: 0, max: 2, label: 'Level' });
 
         folder.addInput(this._plane.material.uniforms.u_saturation, 'value', { min: 0, max: 2, label: 'Saturation' });
         folder.addInput(this._plane.material.uniforms.u_brightness, 'value', { min: 0, max: 10, label: 'Brightness' });
         folder.addInput(this._plane.material.uniforms.u_contrast, 'value', { min: 0, max: 2, label: 'Contrast' });
+
+        folder.addInput(this._plane.material.uniforms.u_uv_offset_x, 'value', { min: 0, max: 1, label: 'Offset X' });
 
         const animations = folder.addFolder({ title: 'Animations' });
         animations.addInput(this._settings, 'animation', { options: this._settings.animationOptions });
@@ -249,6 +291,7 @@ class SceneLevels extends Scene {
         this._plane.material.uniforms.u_level_min.value = 0;
         this._plane.material.uniforms.u_level_max.value = 1;
         this._plane.material.uniforms.u_level.value = 1;
+        this._plane.material.uniforms.u_uv_offset_x.value = 1;
     }
 }
 

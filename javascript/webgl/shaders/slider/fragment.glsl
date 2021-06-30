@@ -1,5 +1,6 @@
 varying vec2 v_uv;
 varying vec2 v_uv_r;
+varying float v_color_effect_intensity;
 
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -70,11 +71,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     vec4 transformed_texel = texture2D(u_texture, r_uv);
 
     // Levels
-    transformed_texel = vec4(finalLevels(transformed_texel.rgb, u_level_min, u_level, u_level_max), 1.0);
+    // transformed_texel = vec4(finalLevels(transformed_texel.rgb, u_level_min, u_level, u_level_max), 1.0);
+    transformed_texel = vec4(finalLevels(transformed_texel.rgb, u_level_min, v_color_effect_intensity, u_level_max), 1.0);
 
     // Contrast & Saturation & Brightness
-    transformed_texel = vec4(ContrastSaturationBrightness(transformed_texel.rgb, u_brightness, u_saturation, u_contrast), 1.0);
-    transformed_texel *= u_alpha;
+    transformed_texel = vec4(ContrastSaturationBrightness(transformed_texel.rgb, 1.0 + 0.2 * v_color_effect_intensity, v_color_effect_intensity, u_contrast), 1.0);
+    transformed_texel *= v_color_effect_intensity;
 
     // Mask
     // initial_texel *= 1.0 - uv_mask;

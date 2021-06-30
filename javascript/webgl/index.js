@@ -1,3 +1,6 @@
+// Config
+import sceneFactory from './scenes/sceneFactory';
+
 // Vendor
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -12,6 +15,7 @@ import Scene from './scenes/SceneLevels';
 class WebGLApplication {
     constructor(options) {
         this.canvas = options.canvas;
+        this.sceneName = options.sceneName;
 
         this._bindAll();
         this._setup();
@@ -50,7 +54,8 @@ class WebGLApplication {
     }
 
     _setupScene() {
-        this._scene = new Scene({
+        const constructor = sceneFactory[this.sceneName];
+        this._scene = new constructor({
             renderer: this._renderer,
             stream: this._streamVideo,
             width: this._width,

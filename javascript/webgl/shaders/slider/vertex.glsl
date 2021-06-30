@@ -1,9 +1,11 @@
+uniform vec2 u_screen_resolution;
 uniform vec2 u_resolution;
 uniform vec2 u_aspect_ratio;
 uniform float u_scale;
 
 varying vec2 v_uv;
 varying vec2 v_uv_r;
+varying float v_color_effect_intensity;
 
 vec2 resizedUv(vec2 inital_uv, vec2 resolution, vec2 aspect_ratio)
 {
@@ -35,9 +37,16 @@ void main() {
     // Resize
     v_uv_r = resizedUv(v_uv, u_resolution, u_aspect_ratio);
 
-	// Scale from center
-	v_uv_r = (v_uv_r - 0.5) * (1.0 / u_scale) + 0.5;
+	// Inside parallax
+	float progress_x = glPos.x / u_screen_resolution.x;
+	v_uv_r = (v_uv_r - 0.5) * (1.0 / u_scale) + 0.5; // scale from center
+	v_uv_r.x += progress_x * (u_scale - 1.0); // displace uv.x
 
+	// Fade
+	float fade_progress_x = (glPos.x + u_screen_resolution.x * 0.5) / u_screen_resolution.x;
+	v_color_effect_intensity = fade_progress_x;
+	v_color_effect_intensity = cubicPulse(0.5, 0.45,fade_progress_x);
+	// v_uv_r.x = v_color_effect_intensity;
 
     gl_Position = glPos;
 }
