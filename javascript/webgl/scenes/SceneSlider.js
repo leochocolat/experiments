@@ -7,7 +7,7 @@ import grid from '../configs/grid';
 
 // Vendors
 import gsap from 'gsap';
-import { PerspectiveCamera, Scene } from 'three';
+import { Object3D, PerspectiveCamera, Scene } from 'three';
 import InertiaPlugin from '../../vendors/gsap/InertiaPlugin';
 import Slide from '../objects/Slide';
 
@@ -27,10 +27,11 @@ class SceneSlider extends Scene {
             mouseDamping: 0.1,
             mouseScale: 0.4,
             scale: 0.7,
+            positionOnDrag: 0,
             padding: 200,
-            zPadding: 50,
+            zPadding: 20,
             parallax: {
-                scale: 1.2
+                scale: 1.1
             },
             filters: {
                 levelFactor: 1.5,
@@ -38,6 +39,17 @@ class SceneSlider extends Scene {
                 brightnessFactor: 0.2,
                 contrastFactor: 1,
                 alphaFactor: 1,
+            },
+            camera: {
+                interactionsEnabled: false,
+                translateFactor: {
+                    x: 50,
+                    y: 30,
+                },
+                rotateAngle: {
+                    x: 0.7,
+                    y: -1,
+                }
             }
         }
 
@@ -59,6 +71,7 @@ class SceneSlider extends Scene {
         this._bindAll();
         
         this._camera = this._createCamera();
+        this._container = this._createContainer();
         this._slides = this._createSlides();
         this._debugFolder = this._createDebugFolder();
         
@@ -75,8 +88,8 @@ class SceneSlider extends Scene {
 
     update(time, delta, fps) {
         this._updatePosition();
-        
         this._updateMousePosition();
+        this._updateCamera();
         
         for (let i = 0; i < this._slides.length; i++) {
             const slide = this._slides[i];
@@ -101,28 +114,15 @@ class SceneSlider extends Scene {
      */
     _createCamera() {
         const fov = (180 * (2 * Math.atan(this._height / 2 / PESPECTIVE))) / Math.PI;
-        const camera = new PerspectiveCamera(fov, this._width / this._height, 0.1, 1000);
+        const camera = new PerspectiveCamera(fov, this._width / this._height, 0.1, 2000);
         camera.position.z = PESPECTIVE;
         return camera;
     }
 
-    _createDebugFolder() {
-        const folder = this._debugger.addFolder({ title: 'Slider' });
-
-        folder.addInput(this._settings, 'damping', { min: 0, max: 1 });
-        folder.addInput(this._settings, 'mouseDamping', { min: 0, max: 1 });
-        folder.addInput(this._settings, 'mouseScale', { min: 0, max: 1 });
-
-        const parallax = folder.addFolder({ title: 'Parallax' });
-        parallax.addInput(this._settings.parallax, 'scale', { min: 1, max: 5 });
-
-        const filters = folder.addFolder({ title: 'Filters' });
-        filters.addInput(this._settings.filters, 'alphaFactor', { min: 0, max: 10 });
-        filters.addInput(this._settings.filters, 'levelFactor', { min: 0, max: 10 });
-        filters.addInput(this._settings.filters, 'saturationFactor', { min: 0, max: 10 });
-        filters.addInput(this._settings.filters, 'brightnessFactor', { min: 0, max: 10 });
-
-        return folder;
+    _createContainer() {
+        const container = new Object3D();
+        this.add(container);
+        return container;
     }
 
     _createSlides() {
@@ -154,13 +154,11 @@ class SceneSlider extends Scene {
                 // Place in z space
                 slide.position.z = block.order * this._settings.zPadding;
                 
-                this.add(slide);
+                this._container.add(slide);
                 slides.push(slide);
 
                 dragWidth += colWidth + padding;
             }
-
-            // dragWidth += colWidth + this._settings.padding;
         }
 
         this.maxPosition = 0;
@@ -200,6 +198,15 @@ class SceneSlider extends Scene {
         this._normalizedMousePosition.current.y = math.lerp(this._normalizedMousePosition.current.y, this._normalizedMousePosition.target.y, this._settings.mouseDamping);
     }
 
+    _updateCamera() {
+        if (!this._settings.camera.interactionsEnabled) return;
+        this._camera.position.x = (this._normalizedMousePosition.current.x - 0.5) * 2 * this._settings.camera.translateFactor.x;
+        this._camera.position.y = (this._normalizedMousePosition.current.y - 0.5) * 2 * this._settings.camera.translateFactor.y;
+        this._camera.rotation.y = (this._normalizedMousePosition.current.x - 0.5) * 2 * math.degToRad(this._settings.camera.rotateAngle.y);
+        // this._camera.position.y = this._normalizedMousePosition.current.y * 100.0;
+        // this._camera.rotation.y = this._normalizedMousePosition.current.x * 0.1;
+    }
+
     _updateSlidePosition(slide) {
         slide.position.x = this._position.current.x;
     }
@@ -216,11 +223,45 @@ class SceneSlider extends Scene {
         }
     }
 
+    /**
+     * Debug
+     */
+    _createDebugFolder() {
+        const folder = this._debugger.addFolder({ title: 'Slider' });
+
+        folder.addInput(this._settings, 'damping', { min: 0, max: 1 });
+        folder.addInput(this._settings, 'mouseDamping', { min: 0, max: 1 });
+        folder.addInput(this._settings, 'mouseScale', { min: 0, max: 1 });
+        folder.addInput(this._settings, 'positionOnDrag', { min: -300, max: 0 });
+
+        const parallax = folder.addFolder({ title: 'Parallax' });
+        parallax.addInput(this._settings.parallax, 'scale', { min: 1, max: 5 });
+
+        const filters = folder.addFolder({ title: 'Filters' });
+        filters.addInput(this._settings.filters, 'alphaFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'levelFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'saturationFactor', { min: 0, max: 10 });
+        filters.addInput(this._settings.filters, 'brightnessFactor', { min: 0, max: 10 });
+
+        const camera = folder.addFolder({ title: 'Camera' });
+        camera.addInput(this._settings.camera, 'interactionsEnabled').on('change', this._interactionsToggleHandler);
+        camera.addInput(this._settings.camera.translateFactor, 'x', { min: -1000, max: 1000 });
+        camera.addInput(this._settings.camera.translateFactor, 'y', { min: -1000, max: 1000 });
+        camera.addInput(this._settings.camera.rotateAngle, 'x', { min: -90, max: 90 });
+        camera.addInput(this._settings.camera.rotateAngle, 'y', { min: -90, max: 90 });
+
+        return folder;
+    }
+
+    /**
+     * Events
+     */
     _bindAll() {
         this._dragstartHandler = this._dragstartHandler.bind(this);
         this._dragHandler = this._dragHandler.bind(this);
         this._dragendHandler = this._dragendHandler.bind(this);
         this._mousemoveHandler = this._mousemoveHandler.bind(this);
+        this._interactionsToggleHandler = this._interactionsToggleHandler.bind(this);
     }
 
     _setupEventListeners() {
@@ -239,6 +280,8 @@ class SceneSlider extends Scene {
 
         this._position.target.x -= delta.x;
         this._position.target.x = math.clamp(this._position.target.x, this.minPosition, this.maxPosition);
+        
+        gsap.to(this._container.position, { duration: 0.8, z: this._settings.positionOnDrag, ease: 'sine.out' });
     }
 
     _dragHandler(e) {
@@ -250,6 +293,8 @@ class SceneSlider extends Scene {
 
     _dragendHandler() {
         this._throw();
+
+        gsap.to(this._container.position, { duration: 0.8, z: 0, ease: 'sine.out' });
     }
 
     _mousemoveHandler(e) {
@@ -258,6 +303,13 @@ class SceneSlider extends Scene {
 
         this._normalizedMousePosition.target.x = e.clientX / this._width;
         this._normalizedMousePosition.target.y = 1.0 - e.clientY / this._height;
+    }
+
+    _interactionsToggleHandler() {
+        this._camera.position.set(0, 0, PESPECTIVE);
+        this._camera.rotation.x = 0;
+        this._camera.rotation.y = 0;
+        this._camera.rotation.z = 0;
     }
 }
 

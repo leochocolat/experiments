@@ -5,6 +5,7 @@ import distance from './distance';
 import map from './map';
 import modulo from './modulo';
 import angle from './angle';
+import degToRad from './degToRad';
 
 export default {
     clamp,
@@ -14,4 +15,5 @@ export default {
     map,
     modulo,
     angle,
+    degToRad,
 };
