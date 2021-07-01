@@ -25,6 +25,8 @@ class SceneSlider extends Scene {
         this._settings = {
             damping: 0.1,
             mouseDamping: 0.1,
+            mouseScale: 0.4,
+            scale: 0.7,
             padding: 200,
             zPadding: 50,
             parallax: {
@@ -33,13 +35,18 @@ class SceneSlider extends Scene {
             filters: {
                 levelFactor: 1.5,
                 saturationFactor: 1,
-                brightnessFactor: 1,
+                brightnessFactor: 0.2,
                 contrastFactor: 1,
                 alphaFactor: 1,
             }
         }
 
         this._mousePosition = {
+            target: { x: 0, y: 0 },
+            current: { x: 0, y: 0 },
+        }
+
+        this._normalizedMousePosition = {
             target: { x: 0, y: 0 },
             current: { x: 0, y: 0 },
         }
@@ -68,12 +75,16 @@ class SceneSlider extends Scene {
 
     update(time, delta, fps) {
         this._updatePosition();
-        this._updateSlidesPosition();
-
+        
         this._updateMousePosition();
-        this._updateSlidesMousePosition();
-
-        this._updateSlidesSettings();
+        
+        for (let i = 0; i < this._slides.length; i++) {
+            const slide = this._slides[i];
+            this._updateSlidePosition(slide);
+            this._updateSlideMousePosition(slide);
+            this._updateSlideSettings(slide);
+            slide.update();
+        }
     }
 
     resize(width, height) {
@@ -100,6 +111,7 @@ class SceneSlider extends Scene {
 
         folder.addInput(this._settings, 'damping', { min: 0, max: 1 });
         folder.addInput(this._settings, 'mouseDamping', { min: 0, max: 1 });
+        folder.addInput(this._settings, 'mouseScale', { min: 0, max: 1 });
 
         const parallax = folder.addFolder({ title: 'Parallax' });
         parallax.addInput(this._settings.parallax, 'scale', { min: 1, max: 5 });
@@ -115,33 +127,40 @@ class SceneSlider extends Scene {
 
     _createSlides() {
         const slides = [];
-        let dragWidth = 0;
+        let dragWidth = -this._width / 2 + this._settings.padding;
 
-        for (let i = 0; i < grid.columns.length; i++) {
-            const col = grid.columns[i];
+        const amount = 50;
+        const padding = this._settings.padding * this._settings.scale;
+
+        for (let i = 0; i < amount; i++) {
+            const col = grid.columns[i % grid.columns.length];
+            const colWidth = col.width * this._width * this._settings.scale;
 
             for (let j = 0; j < col.blocks.length; j++) {
                 const block = col.blocks[j];
-                const width = block.width * this._width / 4;
+                const width = colWidth;
                 const height = width * block.aspectRatio;
 
                 const slide = new Slide({
+                    index: i,
                     viewport: { width: this._width, height: this._height },
                     width,
                     height,
-                    initialPosition: dragWidth,
+                    initialPosition: dragWidth + width / 2,
                     image: block.image,
                     settings: this._settings,
                 });
-    
-                dragWidth += slide.width + this._settings.padding;
 
                 // Place in z space
                 slide.position.z = block.order * this._settings.zPadding;
                 
                 this.add(slide);
-                slides.push(slide);   
+                slides.push(slide);
+
+                dragWidth += colWidth + padding;
             }
+
+            // dragWidth += colWidth + this._settings.padding;
         }
 
         this.maxPosition = 0;
@@ -176,23 +195,21 @@ class SceneSlider extends Scene {
     _updateMousePosition() {
         this._mousePosition.current.x = math.lerp(this._mousePosition.current.x, this._mousePosition.target.x, this._settings.mouseDamping);
         this._mousePosition.current.y = math.lerp(this._mousePosition.current.y, this._mousePosition.target.y, this._settings.mouseDamping);
+        
+        this._normalizedMousePosition.current.x = math.lerp(this._normalizedMousePosition.current.x, this._normalizedMousePosition.target.x, this._settings.mouseDamping);
+        this._normalizedMousePosition.current.y = math.lerp(this._normalizedMousePosition.current.y, this._normalizedMousePosition.target.y, this._settings.mouseDamping);
     }
 
-    _updateSlidesPosition() {
-        for (let i = 0; i < this._slides.length; i++) {
-            const slide = this._slides[i];
-            slide.position.x = this._position.current.x;
-        }
+    _updateSlidePosition(slide) {
+        slide.position.x = this._position.current.x;
     }
 
-    _updateSlidesMousePosition() {
-        for (let i = 0; i < this._slides.length; i++) {
-            const slide = this._slides[i];
-            slide.mousePosition = this._mousePosition.current;
-        }
+    _updateSlideMousePosition(slide) {
+        slide.mousePosition = this._mousePosition.current;
+        slide.normalizedMousePosition = this._normalizedMousePosition.current;
     }
     
-    _updateSlidesSettings() {
+    _updateSlideSettings(slide) {
         for (let i = 0; i < this._slides.length; i++) {
             const slide = this._slides[i];
             slide.settings = this._settings;
@@ -238,6 +255,9 @@ class SceneSlider extends Scene {
     _mousemoveHandler(e) {
         this._mousePosition.target.x = e.clientX;
         this._mousePosition.target.y = e.clientY;
+
+        this._normalizedMousePosition.target.x = e.clientX / this._width;
+        this._normalizedMousePosition.target.y = 1.0 - e.clientY / this._height;
     }
 }
 

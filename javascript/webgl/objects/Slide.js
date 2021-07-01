@@ -9,6 +9,8 @@ class Slide extends Object3D {
     constructor(options) {
         super();
 
+        this._index = options.index;
+
         this._viewport = options.viewport;
 
         this._width = options.width;
@@ -18,12 +20,13 @@ class Slide extends Object3D {
 
         this._settings = options.settings;
 
-        this._initialPosition = options.initialPosition;
+        this._initialPosition = new Vector2(options.initialPosition, 0);
 
         this._textureWidth = 0;
         this._textureHeight = 0;
 
         this._mousePosition = new Vector2(0, 0);
+        this._normalizedMousePosition = new Vector2(0, 0);
 
         this._bindAll();
 
@@ -59,6 +62,9 @@ class Slide extends Object3D {
         this._material.uniforms.u_saturation_factor.value = this._settings.filters.saturationFactor;
         this._material.uniforms.u_brightness_factor.value = this._settings.filters.brightnessFactor;
         this._material.uniforms.u_contrast_factor.value = this._settings.filters.contrastFactor;
+
+        // Mouse
+        this._material.uniforms.u_mouse_scale.value = this._settings.mouseScale;
     }
 
     get mousePosition() {
@@ -68,6 +74,19 @@ class Slide extends Object3D {
     set mousePosition(value) {
         this._mousePosition.x = value.x;
         this._mousePosition.y = value.y;
+    }
+
+    get normalizedMousePosition() {
+        return this._normalizedMousePosition;
+    }
+
+    set normalizedMousePosition(value) {
+        this._normalizedMousePosition.x = value.x;
+        this._normalizedMousePosition.y = value.y;
+    }
+
+    update() {
+        this._material.uniforms.u_center.value.x = this.position.x + this._initialPosition.x;
     }
 
     /**
@@ -100,7 +119,10 @@ class Slide extends Object3D {
                 // Scale
                 u_scale: { value: this._settings.parallax.scale },
                 // Mouse
-                u_mouse_position: { value: this._mousePosition }
+                // u_mouse_position: { value: this._mousePosition }
+                u_mouse_position: { value: this._normalizedMousePosition },
+                u_mouse_scale: { value: this._settings.mouseScale },
+                u_center: { value: new Vector2(this._initialPosition.x, this._initialPosition.y) }
             },
         });
         
@@ -111,7 +133,7 @@ class Slide extends Object3D {
         const geometry = new PlaneGeometry(1, 1, 1);
         const mesh = new Mesh(geometry, this._material);
         mesh.scale.set(this._width, this._height, 1);
-        mesh.position.x = this._initialPosition;
+        mesh.position.x = this._initialPosition.x;
 
         this.add(mesh);
 

@@ -1,5 +1,7 @@
 varying vec2 v_uv;
 varying vec2 v_uv_r;
+varying vec2 v_uv_screen;
+varying vec4 v_position;
 
 uniform float u_time;
 uniform vec2 u_resolution;
@@ -16,6 +18,9 @@ uniform float u_brightness_factor;
 uniform float u_contrast_factor;
 
 uniform vec2 u_mouse_position;
+uniform float u_mouse_scale;
+
+uniform vec2 u_center;
 
 float mouse_size = 0.1;
 
@@ -25,6 +30,10 @@ float cubicPulse( float c, float w, float x ){
     if( x>w ) return 0.0;
     x /= w;
     return 1.0 - x*x*(3.0-2.0*x);
+}
+
+float circleSDF(vec2 st) {
+    return length(st - 0.5) * 2.0;
 }
 
 // Source: https://gist.github.com/aferriss/9be46b6350a08148da02559278daa244
@@ -74,11 +83,21 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
     // Effect texel
     vec4 transformed_texel = texture2D(u_texture, r_uv);
 
+    vec2 mouse_position = u_mouse_position;
+    mouse_position.y *= u_screen_resolution.y / u_screen_resolution.x;
+
+    vec2 uv = vec2(gl_FragCoord.xy / u_screen_resolution.xy);
+    uv.y *= u_screen_resolution.y / u_screen_resolution.x;
+    float circle = smoothstep(0.0, u_mouse_scale, length(uv - mouse_position));
+
+    float brightness_mask = 1.0 - smoothstep(0.0, 1.0, circle);
+
     float progress = gl_FragCoord.x / u_screen_resolution.x;
 
-    // Effects values
+    // Color effects values
     float level = cubicPulse(0.5, 0.7, progress) * u_level_factor;
-    float brightness = 1.0 + 1.0 - cubicPulse(0.5, 0.6, progress) * u_brightness_factor;
+    // float brightness = 1.0 + 1.0 - cubicPulse(0.5, 0.6, progress) * u_brightness_factor;
+    float brightness = 1.0 + u_brightness_factor * brightness_mask;
     float saturation = cubicPulse(0.5, 0.6, progress) * u_saturation_factor;
     float contrast = 1.0;
     float alpha = cubicPulse(0.5, 0.6, progress) * u_alpha_factor;
@@ -92,7 +111,12 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord)
 
     // Output
 	fragColor = transformed_texel;
-	// fragColor = vec4(u_mouse_position.x / u_screen_resolution.x, 0.0, 0.0, 1.0);
+
+    // Debug
+	// fragColor = vec4(brightness_mask, 0.0, 0.5, 1.0);
+	// fragColor = vec4(gl_FragCoord.xy / u_screen_resolution.xy, 0.0, 1.0);
+	// fragColor = vec4(v_uv.x, v_uv.y, 0.0, 1.0);
+	// fragColor = vec4(v_uv_screen.x, v_uv_screen.y, 0.0, 1.0);
 }
 
 void main() {
