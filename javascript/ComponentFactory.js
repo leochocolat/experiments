@@ -1,5 +1,6 @@
 const COMPONENTS = {
   'canvas': () => import('./components/ComponentCanvas.js'),
+  'canvas2d': () => import('./components/ComponentCanvas2d.js'),
 };
 
 class ComponentFactory {

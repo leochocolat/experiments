@@ -21,11 +21,13 @@
   },
   "dependencies": {
     "bowser": "^2.11.0",
+    "glsl-noise": "^0.0.0",
     "glsl-rotate": "^1.1.0",
     "gsap": "^3.7.1",
     "loaders": "github:immersive-garden/loaders",
+    "perlin-simplex": "^0.0.3",
     "resource-loader": "github:immersive-garden/resource-loader",
-    "three": "^0.125.2",
+    "three": "^0.133.1",
     "tweakpane": "^3.0.4"
   }
 }

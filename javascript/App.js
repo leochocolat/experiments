@@ -4,13 +4,16 @@ import ComponentFactory from './ComponentFactory';
 
 // Loaders
 import ThreeGLTFDracoLoader from 'loaders/three-gltf-draco-loader';
+import ThreeTextureLoader from 'loaders/three-texture-loader';
 
 // Resources
 import resources from './resources';
 
+ResourceLoader.registerLoader(ThreeTextureLoader, 'texture');
 ResourceLoader.registerLoader(ThreeGLTFDracoLoader, 'gltf', {
     dracoDecoderPath: './libs/draco/',
 });
+
 
 class App {
     constructor() {
