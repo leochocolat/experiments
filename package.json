@@ -26,7 +26,7 @@
     "gsap": "^3.7.1",
     "loaders": "github:immersive-garden/loaders",
     "perlin-simplex": "^0.0.3",
-    "resource-loader": "git+https://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:x-oauth-basic@github.com/immersive-garden/resource-loader.git",
+    "resource-loader": "github:immersive-garden/resource-loader",
     "three": "^0.133.1",
     "tweakpane": "^3.0.4"
   }

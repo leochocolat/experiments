@@ -17,7 +17,7 @@ class WebGLApplication {
 
         this._settings = {
             isPaused: false,
-            dpr: 1,
+            dpr: 2,
         }
 
         this._bindAll();
@@ -59,6 +59,7 @@ class WebGLApplication {
     _setupScene() {
         const constructor = sceneFactory[this.sceneName];
         this._scene = new constructor({
+            root: this,
             renderer: this._renderer,
             stream: this._streamVideo,
             width: this._width,

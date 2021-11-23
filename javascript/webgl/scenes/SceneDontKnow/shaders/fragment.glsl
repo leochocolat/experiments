@@ -25,11 +25,16 @@ void main() {
     st.x = fract(st.x * patternScale);
     st.y = fract(st.y * patternScale);
 
-    st.x = smoothstep(simplexNoise1, 1.0, st.x);
-    // st.y = smoothstep(simplexNoise1, 1.0, st.y);
+    float pattern = st.y;
+
+    #ifdef IS_VERTICAL
+        pattern = st.x;
+    #endif
+
+    pattern = smoothstep(simplexNoise1, 1.0, pattern);
 
     vec3 color = color1;
-    color *= st.x;
+    color *= pattern;
     // color *= st.y;
     color += simplexNoise2 * color2;
     color += simplexNoise3 * color3;

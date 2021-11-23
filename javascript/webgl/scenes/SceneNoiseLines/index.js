@@ -1,6 +1,6 @@
 // Vendors
 import ResourceLoader from 'resource-loader';
-import { BoxGeometry, Color, DoubleSide, LuminanceFormat, Mesh, MeshBasicMaterial, MeshNormalMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, TextureLoader, Vector2 } from 'three';
+import { BoxGeometry, Color, DoubleSide, Mesh, MeshBasicMaterial, MeshNormalMaterial, PerspectiveCamera, PlaneGeometry, Scene, ShaderMaterial, TextureLoader, Vector2 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
@@ -18,39 +18,23 @@ import whiteNoiseFragment from './shaders/postprocessing/whiteNoise/fragment.gls
 
 const PERSPECTIVE = 800;
 
-class SceneDontKnow extends Scene {
+class SceneNoiseLines extends Scene {
     constructor(options = {}) {
         super();
 
-        this._name = 'Dont Know';
-        this._root = options.root;
+        this._name = 'Noise Lines';
         this._width = options.width;
         this._height = options.height;
         this._debugger = options.debugger;
         this._renderer = options.renderer;
 
         this._settings = {
-            activeColorTheme: 'blackAndWhite',
-            colorsThemesOptions: {
-                colorful: 'colorful',
-                blackAndWhite: 'blackAndWhite',
-            },
-            colorsThemes: {
-                blackAndWhite: {
-                    color1: '#ffffff',
-                    color2: '#000000',
-                    color3: '#000000',
-                },
-                colorful: {
-                    color1: '#ff6f6f',
-                    color2: '#7f7fff',
-                    color3: '#7dff7d',
-                },
+            colors: {
+                color1: '#ff6f6f',
+                color2: '#7f7fff',
+                color3: '#7dff7d',
             },
             speed: 0.15,
-            export: {
-                aspectRatio: 0.7071155
-            }
         }
 
         this._bindAll();
@@ -81,9 +65,6 @@ class SceneDontKnow extends Scene {
         const scaledTime = time * this._settings.speed;
         this._material.uniforms.time.value = scaledTime;
         this._passes.whiteNoisePass.uniforms.time.value = scaledTime;
-
-        // this._plane.rotation.x = time * 0.1;
-        // this._plane.rotation.y = time * 0.1;
     }
 
     resize(width, height) {
@@ -193,17 +174,17 @@ class SceneDontKnow extends Scene {
                 resolution: { value: new Vector2(this._width, this._height) },
                 time: { value: 0 },
                 // Colors
-                color1: { value: new Color(this._settings.colorsThemes[this._settings.activeColorTheme].color1) },
-                color2: { value: new Color(this._settings.colorsThemes[this._settings.activeColorTheme].color2) },
-                color3: { value: new Color(this._settings.colorsThemes[this._settings.activeColorTheme].color3) },
+                color1: { value: new Color(this._settings.colors.color1) },
+                color2: { value: new Color(this._settings.colors.color2) },
+                color3: { value: new Color(this._settings.colors.color3) },
                 // Pattern
                 patternScale: { value: 40.0 },
                 // Noises
                 simplexScale: { value: 2.0 },
-            },
-            defines: {
-                IS_VERTICAL: true,
-            },
+                whiteNoiseScale: { value: 20.0 },
+                // Displacement
+                displacementAmplitude: { value: 0.1 },
+            }
         });
 
         return material;
@@ -211,9 +192,7 @@ class SceneDontKnow extends Scene {
 
     _createPlane() {
         const geometry = new PlaneGeometry(1, 1, 1);
-        // const geometry = new BoxGeometry(1, 1, 1);
         const mesh = new Mesh(geometry, this._material);
-        // mesh.scale.set(this._width, this._width, this._width);
         mesh.scale.set(this._width, this._height);
         this.add(mesh);
         return mesh;
@@ -225,30 +204,10 @@ class SceneDontKnow extends Scene {
     }
 
     _export() {
-        // Resize to export format
-        const previousWidth = this._width;
-        const previousHeight = this._height;
-
-        const width = this._width;
-        const height = this._width * this._settings.export.aspectRatio;
-
-        this._renderer.setSize(width, height, false);
-        this.resize(width, height);
-
-        setTimeout(() => {
-            const downloadButton = document.createElement('a');
-            downloadButton.download = `${this._name}.png`;
-            downloadButton.href = this._renderer.domElement.toDataURL('image/png');
-            downloadButton.click();
-
-            // Reset size
-            setTimeout(() => {
-                this._renderer.setSize(previousWidth, previousHeight, false);
-                this.resize(previousWidth, previousHeight);
-            }, 100);
-
-        }, 100);
-
+        const downloadButton = document.createElement('a');
+        downloadButton.download = `${this._name}.png`;
+        downloadButton.href = this._renderer.domElement.toDataURL('image/png');
+        downloadButton.click();
     }
 
     /**
@@ -261,20 +220,21 @@ class SceneDontKnow extends Scene {
         global.addInput(this._settings, 'speed', { label: 'Speed', min: 0, max: 2 });
 
         const colors = this._debugger.addFolder({ title: 'Colors' });
-        colors.addInput(this._settings.colorsThemes[this._settings.activeColorTheme], 'color1', { label: 'Color 1' }).on('change', this._settingsChangedHandler);
-        colors.addInput(this._settings.colorsThemes[this._settings.activeColorTheme], 'color2', { label: 'Color 2' }).on('change', this._settingsChangedHandler);
-        colors.addInput(this._settings.colorsThemes[this._settings.activeColorTheme], 'color3', { label: 'Color 3' }).on('change', this._settingsChangedHandler);
+        colors.addInput(this._settings.colors, 'color1', { label: 'Color 1' }).on('change', this._settingsChangedHandler);
+        colors.addInput(this._settings.colors, 'color2', { label: 'Color 2' }).on('change', this._settingsChangedHandler);
+        colors.addInput(this._settings.colors, 'color3', { label: 'Color 3' }).on('change', this._settingsChangedHandler);
 
         const pattern = this._debugger.addFolder({ title: 'Pattern' });
         pattern.addInput(this._material.uniforms.patternScale, 'value', { label: 'Scale', min: 0, max: 100 });
-        pattern.addInput(this._material.defines, 'IS_VERTICAL', { label: 'Vertical' }).on('change', () => { this._material.needsUpdate = true; });
 
         const noise = this._debugger.addFolder({ title: 'Noise' });
         noise.addInput(this._material.uniforms.simplexScale, 'value', { label: 'Simplex Scale', min: 0, max: 10 });
+        noise.addInput(this._material.uniforms.whiteNoiseScale, 'value', { label: 'White Noise Scale', min: 0, max: 1000 });
 
-        const exportSettings = this._debugger.addFolder({ title: 'Export' });
-        exportSettings.addInput(this._settings.export, 'aspectRatio', { label: 'Aspect Ratio' });
-        exportSettings.addButton({ title: 'Export' }).on('click', this._export);
+        const displacement = this._debugger.addFolder({ title: 'Displacement' });
+        displacement.addInput(this._material.uniforms.displacementAmplitude, 'value', { label: 'Amplitude', min: 0, max: 10 });
+
+        this._debugger.addButton({ title: 'Export' }).on('click', this._export);
     }
 
     /**
@@ -286,12 +246,10 @@ class SceneDontKnow extends Scene {
     }
 
     _settingsChangedHandler() {
-        this._material.uniforms.color1.value.set(this._settings.colorsThemes[this._settings.activeColorTheme].color1);
-        this._material.uniforms.color2.value.set(this._settings.colorsThemes[this._settings.activeColorTheme].color2);
-        this._material.uniforms.color3.value.set(this._settings.colorsThemes[this._settings.activeColorTheme].color3);
-
-        // this._debugger.refresh();
+        this._material.uniforms.color1.value.set(this._settings.colors.color1);
+        this._material.uniforms.color2.value.set(this._settings.colors.color2);
+        this._material.uniforms.color3.value.set(this._settings.colors.color3);
     }
 }
 
-export default SceneDontKnow;
+export default SceneNoiseLines;
